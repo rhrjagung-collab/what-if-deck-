@@ -1,0 +1,4 @@
+# Ekspor PDF lokal; deck dipublikasikan sebagai HTML + figur saja.
+deck.pdf
+index.pdf
+*.pdf.bak

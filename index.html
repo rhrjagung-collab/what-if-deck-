@@ -1,0 +1,1086 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<title>Analisis What-if dan SWIFRA — Proses Industri dan Manajemen Risiko</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!--
+  Deck akademik HTML (reveal.js, berkas tunggal).
+  Topik: Analisis "what-if" dan Structured What-if Risk Assessment (SWIFRA).
+  Sumber utama: Lyon & Popov (2022), bab 7, ditambah laporan CSB (2011).
+  Kanvas 1280 x 720 (16:9). Batas huruf: isi >= 30px, sekunder >= 24px, chrome >= 20px.
+
+  Presentasi: buka berkas ini di peramban (F = layar penuh, S = catatan penyaji).
+  Ekspor PDF:  python <skill>/scripts/export_pdf.py index.html -o deck.pdf
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+
+<style>
+/* =====================================================================
+   Sistem rancangan deck akademik — putih datar, navy + aksen biru.
+   ===================================================================== */
+:root {
+  --paper:  #ffffff;
+  --ink:    #1c2733;
+  --navy:   #1f4e79;
+  --accent: #2e75b6;
+  --wash:   #eef3f9;
+  --rule:   #d9e2ec;
+  --muted:  #5b6773;
+  --on-navy:#cfe0f2;
+}
+
+.reveal {
+  --r-background-color: #ffffff;
+  --r-main-font: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  --r-main-font-size: 32px;
+  --r-main-color: var(--ink);
+  --r-block-margin: 0;
+  --r-heading-font: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  --r-heading-color: var(--navy);
+  --r-heading-line-height: 1.15;
+  --r-heading-letter-spacing: -0.01em;
+  --r-heading-text-transform: none;
+  --r-heading-text-shadow: none;
+  --r-heading-font-weight: 700;
+  --r-heading1-size: 60px;
+  --r-heading2-size: 44px;
+  --r-heading3-size: 34px;
+  --r-heading4-size: 28px;
+  --r-code-font: 'Source Sans 3', Consolas, monospace;
+  --r-link-color: var(--accent);
+  --r-link-color-dark: var(--accent);
+  --r-link-color-hover: var(--accent);
+  --r-selection-background-color: #b3d0ee;
+  --r-selection-color: #10202f;
+
+  font-family: var(--r-main-font);
+  font-size: var(--r-main-font-size);
+  color: var(--r-main-color);
+}
+.reveal .slides { text-align: left; }
+.reveal .slides > section {
+  box-sizing: border-box;
+  width: 1280px; height: 720px;
+  padding: 54px 72px;
+  line-height: 1.4;
+  overflow: hidden;
+}
+
+.reveal h1, .reveal h2, .reveal h3 { margin: 0; font-weight: 700; letter-spacing: -0.01em; }
+.reveal h2 { font-size: 44px; line-height: 1.15; color: var(--navy); margin-bottom: 28px; }
+.reveal h3 { font-size: 34px; line-height: 1.2; color: var(--navy); margin-bottom: 14px; }
+
+.kicker {
+  font-size: 20px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent); margin: 0 0 14px;
+}
+
+.reveal ul, .reveal ol { margin: 0; padding-left: 1.15em; }
+.reveal li { margin-bottom: 16px; }
+.reveal li::marker { color: var(--accent); }
+.reveal li ul, .reveal li ol { margin-top: 16px; }
+.reveal p { margin: 0 0 20px; }
+.reveal p:last-child { margin-bottom: 0; }
+
+.title-slide { background: var(--navy); color: #fff; display: flex; flex-direction: column; justify-content: center; }
+.title-slide .kicker { color: var(--on-navy); }
+.title-slide h1 { font-size: 60px; line-height: 1.12; color: #fff; margin-bottom: 20px; }
+.title-slide .subtitle { font-size: 30px; color: var(--on-navy); margin: 0 0 48px; }
+.title-slide .meta { font-size: 26px; font-weight: 600; color: #fff; margin: 0; }
+.title-slide .meta-sub { font-size: 24px; color: var(--on-navy); margin: 8px 0 0; }
+
+.section-slide { display: flex; flex-direction: column; justify-content: center; }
+.section-slide .ghost { font-size: 130px; font-weight: 700; line-height: 1; color: var(--rule); margin: 0 0 6px; }
+.section-slide h2 { font-size: 54px; margin-bottom: 0; }
+.section-slide .kicker { margin-bottom: 0; }
+
+.cols { display: flex; gap: 48px; align-items: flex-start; }
+.col { flex: 1 1 0; min-width: 0; }
+.col.w40 { flex: 0 0 40%; }
+.col.w60 { flex: 0 0 60%; }
+
+.reveal figure { margin: 0; }
+.reveal figure img, .reveal figure svg {
+  display: block; margin: 0 auto; max-width: 100%; max-height: 430px;
+  height: auto; object-fit: contain;
+}
+.reveal figcaption { font-size: 24px; color: var(--muted); line-height: 1.35; margin-top: 14px; }
+
+.reveal .callout {
+  background: var(--wash); border-left: 6px solid var(--accent);
+  padding: 22px 30px; font-size: 30px; line-height: 1.4;
+}
+.reveal .callout + .callout { margin-top: 20px; }
+
+.reveal table { border-collapse: collapse; margin: 0; font-size: 26px; line-height: 1.3; }
+.reveal th {
+  border-top: 3px solid var(--navy); border-bottom: 1.5px solid var(--navy);
+  padding: 12px 18px; text-align: left; color: var(--navy); font-weight: 700;
+}
+.reveal td { border-bottom: 1px solid var(--rule); padding: 12px 18px; vertical-align: top; }
+.reveal tbody tr:last-child td { border-bottom: 3px solid var(--navy); }
+/* .reveal p (0,1,1) outranks a bare .table-source (0,1,0), so the template's
+   declared margin was being overridden and every source line picked up a 20px
+   trailing margin. Invisible, but it inflated the scroll region past the 720px
+   canvas and made the overflow audit report a false positive. This rule restores
+   the intended margin; it is visually identical because a source line is always
+   the last element on its slide. */
+.reveal .table-source { margin: 0; }
+.table-source { font-size: 24px; color: var(--muted); }
+
+.act {
+  display: inline-block; font-size: 24px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--paper); background: var(--accent);
+  padding: 6px 16px; margin-bottom: 20px;
+}
+
+.reveal blockquote {
+  margin: 0; padding: 6px 0 6px 36px; border-left: 6px solid var(--rule);
+  background: none; font-style: italic; font-size: 32px; line-height: 1.4;
+  font-family: 'Source Serif 4', Georgia, serif;
+}
+
+.refs { font-size: 24px; line-height: 1.3; }
+.refs p { margin: 0 0 12px; padding-left: 1.6em; text-indent: -1.6em; }
+
+.reveal .slide-number { background: none; color: var(--muted); font-size: 20px; font-family: inherit; }
+
+/* =====================================================================
+   Lapisan gerak (motion) — animasi masuk berjenjang.
+   Semua elemen terlihat penuh pada gaya dasar; animasi hanya menambahkan
+   gerak. Bila animasi gagal, yang hilang hanyalah geraknya, bukan isinya.
+   ===================================================================== */
+@keyframes deck-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes deck-ghost {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes deck-rule {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.reveal .slides section.present > *:not(.fragment),
+.reveal .slides section.present .cols > .col:not(.fragment),
+.reveal .slides section.present tbody tr:not(.fragment) {
+  animation: deck-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+/* stagger the top-level blocks of a slide */
+.reveal .slides section.present > *:nth-child(1) { animation-delay: 0.00s; }
+.reveal .slides section.present > *:nth-child(2) { animation-delay: 0.07s; }
+.reveal .slides section.present > *:nth-child(3) { animation-delay: 0.14s; }
+.reveal .slides section.present > *:nth-child(4) { animation-delay: 0.21s; }
+.reveal .slides section.present > *:nth-child(5) { animation-delay: 0.28s; }
+.reveal .slides section.present > *:nth-child(6) { animation-delay: 0.35s; }
+.reveal .slides section.present > *:nth-child(n+7) { animation-delay: 0.42s; }
+/* columns and table rows arrive slightly after their block */
+.reveal .slides section.present .cols > .col { animation-delay: 0.26s; }
+.reveal .slides section.present .cols > .col:nth-child(2) { animation-delay: 0.34s; }
+.reveal .slides section.present .cols > .col:nth-child(3) { animation-delay: 0.42s; }
+.reveal .slides section.present tbody tr:nth-child(1) { animation-delay: 0.18s; }
+.reveal .slides section.present tbody tr:nth-child(2) { animation-delay: 0.24s; }
+.reveal .slides section.present tbody tr:nth-child(3) { animation-delay: 0.30s; }
+.reveal .slides section.present tbody tr:nth-child(4) { animation-delay: 0.36s; }
+.reveal .slides section.present tbody tr:nth-child(5) { animation-delay: 0.42s; }
+.reveal .slides section.present tbody tr:nth-child(n+6) { animation-delay: 0.48s; }
+
+/* pemisah bagian: angka besar tumbuh masuk */
+.reveal .slides section.section-slide.present .ghost {
+  animation: deck-ghost 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* aturan tabel tumbuh dari kiri setelah barisnya masuk */
+.reveal .slides section.present table { position: relative; }
+
+/* pecahan (progressive disclosure) diberi sedikit gerak saat muncul */
+.reveal .fragment.visible.visible { }
+.reveal .slides section.present .fragment {
+  transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal .slides section.present .fragment:not(.visible) { transform: translateY(10px); }
+
+/* bilah kemajuan dan kontrol: lebih tenang dari bawaan */
+.reveal .progress { height: 3px; color: var(--accent); }
+.reveal .controls { color: var(--accent); }
+
+/* pengguna yang meminta gerak minimal tidak mendapat lapisan ini sama sekali */
+@media (prefers-reduced-motion: reduce) {
+  .reveal .slides section.present > *,
+  .reveal .slides section.present .cols > .col,
+  .reveal .slides section.present tbody tr,
+  .reveal .slides section.section-slide.present .ghost {
+    animation: none !important;
+  }
+  .reveal .slides section.present .fragment { transition: none !important; }
+  .reveal .slides section.present .fragment:not(.visible) { transform: none !important; }
+}
+
+@media print {
+  @page { size: 1280px 720px; margin: 0; }
+  html, body {
+    margin: 0 !important; padding: 0 !important;
+    width: auto !important; height: auto !important; overflow: visible !important;
+  }
+  .reveal-viewport { position: static !important; width: auto !important; height: auto !important; overflow: visible !important; }
+  .reveal {
+    position: static !important; width: auto !important; height: auto !important; overflow: visible !important;
+    print-color-adjust: exact; -webkit-print-color-adjust: exact;
+  }
+  .reveal .backgrounds, .reveal .controls, .reveal .progress,
+  .reveal .slide-number, .reveal .pause-overlay { display: none !important; }
+  html.reveal-print .reveal .slides,
+  html.print-pdf .reveal .slides {
+    position: static !important; width: auto !important; height: auto !important;
+    margin: 0 !important; padding: 0 !important; left: 0 !important; top: 0 !important;
+    transform: none !important; perspective: none; overflow: visible !important;
+    display: block !important; pointer-events: auto !important; zoom: 1 !important;
+  }
+  html.reveal-print .reveal .slides > section,
+  html.print-pdf .reveal .slides > section {
+    position: static !important; display: block !important;
+    visibility: visible !important; opacity: 1 !important;
+    width: 1280px !important; height: 720px !important;
+    box-sizing: border-box !important; margin: 0 !important;
+    padding: 54px 72px !important;
+    transform: none !important; transition: none !important;
+    overflow: hidden; min-height: 0 !important;
+    page-break-after: always; break-after: page;
+  }
+  html.reveal-print .reveal .slides > section:last-child,
+  html.print-pdf .reveal .slides > section:last-child {
+    page-break-after: auto; break-after: auto;
+    height: 719px !important;
+  }
+  html.reveal-print .reveal .pdf-page > section {
+    position: absolute !important; display: block !important;
+    visibility: visible !important; opacity: 1 !important;
+    width: 1280px !important; height: 720px !important;
+    box-sizing: border-box !important; margin: 0 !important;
+    padding: 54px 72px !important; left: 0 !important; top: 0 !important;
+    transform: none !important; transition: none !important; overflow: hidden;
+  }
+  html.reveal-print .reveal .slides > section.title-slide,
+  html.print-pdf .reveal .slides > section.title-slide,
+  html.reveal-print .reveal .pdf-page > section.title-slide,
+  html.reveal-print .reveal .slides > section.section-slide,
+  html.print-pdf .reveal .slides > section.section-slide,
+  html.reveal-print .reveal .pdf-page > section.section-slide { display: flex !important; }
+
+  .reveal .fragment { opacity: 1 !important; visibility: visible !important; transition: none !important; transform: none !important; }
+
+  /* gerak dimatikan di PDF: hasil cetak harus identik dengan versi sebelumnya */
+  .reveal .slides section > *,
+  .reveal .slides section .cols > .col,
+  .reveal .slides section tbody tr,
+  .reveal .slides section.section-slide .ghost {
+    animation: none !important;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ===================== SAMPUL ===================== -->
+<section class="title-slide">
+  <p class="kicker">Modul lanjutan &middot; Proses Industri dan Manajemen Risiko</p>
+  <h1>Analisis What-if dan SWIFRA</h1>
+  <p class="subtitle">Dari pertanyaan &ldquo;bagaimana bila&rdquo; ke penilaian risiko terstruktur &mdash; dengan satu studi kasus nyata</p>
+  <p class="meta">Team Teaching MK</p>
+  <p class="meta-sub">Program Studi Kesehatan Masyarakat Program Sarjana</p>
+  <aside class="notes">Buka dengan satu kalimat tesis: analisis what-if mudah dipakai tetapi paling sering dipakai secara dangkal, dan sesi ini memperlihatkan apa yang hilang bila ia berhenti pada daftar pertanyaan. Sebutkan bahwa seluruh kerangka diambil dari bab 7 buku Lyon dan Popov (2022) serta laporan investigasi CSB (2011) untuk kasusnya. Sebutkan juga bahwa kasus yang dipakai adalah ledakan nyata yang menewaskan dua pekerja, supaya sesi ini tidak dibuka dengan gambar keliru.</aside>
+</section>
+
+<!-- ===================== TUJUAN ===================== -->
+<section>
+  <p class="kicker">Tujuan pembelajaran</p>
+  <h2>Setelah sesi ini, Anda mampu mengerjakan empat hal ini</h2>
+  <ol>
+    <li>menjelaskan kedudukan analisis what-if di antara metode PHA lain dan dasar normatifnya;</li>
+    <li>menjalankan sepuluh langkah what-if pada satu sistem atau tugas;</li>
+    <li>membedakan hasil lembar what-if tradisional dari lembar SWIFRA;</li>
+    <li>menyusun satu baris SWIFRA lengkap dengan L, S, R, pengendalian tambahan, dan persentase penurunan risiko.</li>
+  </ol>
+  <aside class="notes">Kata kerja keempat adalah yang paling menuntut, karena menuntut mahasiswa menghitung dan mempertahankan angka yang ia tetapkan sendiri. Ingatkan bahwa angka L dan S bukan data laboratorium: keduanya adalah penilaian tim yang wajib dapat dipertahankan alasannya, dan itulah yang dinilai.</aside>
+</section>
+
+<!-- ===================== PEMBUKA: PERTANYAAN ===================== -->
+<section>
+  <p class="kicker">Pembuka</p>
+  <h2>Pertanyaan &ldquo;bagaimana bila&rdquo; datang terlalu sering setelah kejadian</h2>
+  <p style="font-size:28px">Untuk kecelakaan fatal dan insiden serius, pertanyaan ini mungkin mencegah atau mengurangi dampaknya bila diajukan sebelum kejadian.</p>
+  <div class="callout">Rantai pertanyaan dari satu proses kimia: bagaimana bila terjadi reaksi liar di dalam bejana bertekanan? Bagaimana bila bejana itu meledak hebat? Bagaimana bila pelarut mudah terbakar menyembur dan langsung tersulut? Bagaimana bila pecahannya menghantam perpipaan di dekatnya dan melepaskan bahan beracun? Bagaimana bila bahan itu mengenai pekerja dan masyarakat sekitar?</div>
+  <aside class="notes">Kelima pertanyaan pada kotak sorot berasal langsung dari pembuka bab 7 dan sengaja dipertahankan utuh, karena kekuatannya justru pada rentetan bertingkat: satu pertanyaan menuntun ke pertanyaan berikutnya dan memperbesar konsekuensi. Tanyakan ke kelas: dari lima pertanyaan itu, mana yang paling jarang ditanyakan di tempat kerja mereka? Jawaban yang sering muncul adalah dua pertanyaan terakhir, karena keduanya menyangkut pihak di luar pekerja sendiri.</aside>
+</section>
+
+<!-- ===================== BAGIAN 01 ===================== -->
+<section class="section-slide">
+  <p class="ghost">01</p>
+  <p class="kicker">Bagian satu</p>
+  <h2>Kedudukan analisis what-if</h2>
+  <aside class="notes">Bagian ini singkat tetapi penting untuk menempatkan metode: banyak praktisi menganggap what-if sebagai teknik informal tanpa dasar normatif. Faktanya ia disebut dalam standar proses hazard analysis di Amerika Serikat dan dalam beberapa standar konsensus.</aside>
+</section>
+
+<!-- ===================== ASAL USUL ===================== -->
+<section>
+  <p class="kicker">Asal usul</p>
+  <h2>What-if dikembangkan sebagai alternatif HAZOP yang lebih ringan</h2>
+  <div class="cols">
+    <div class="col">
+      <ul>
+        <li>Dikembangkan industri kimia Inggris pada 1960-an.</li>
+        <li>Dipandang sebagai alternatif yang lebih mudah daripada HAZOP.</li>
+        <li>Kini lazim sebagai metode analisis bahaya proses, dan dipakai juga di energi, manufaktur, pangan, transportasi, serta layanan kesehatan.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <div class="callout"><strong>Yang dicari.</strong> Bahaya dan skenario paparan sistem, konsekuensi, penyebab, penyimpangan, kelemahan, pengendalian yang sudah ada, dan pengendalian yang masih dibutuhkan.</div>
+    </div>
+  </div>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), bab 7.</p>
+  <aside class="notes">Sebutkan manfaat sampingan yang disebut penulis: karena tim harus membedah prosesnya langkah demi langkah, analisis ini sering menemukan peluang efisiensi proses dan penurunan biaya. Itu argumen praktis yang berguna ketika mengusulkan analisis kepada manajemen yang melihatnya sebagai beban.</aside>
+</section>
+
+<!-- ===================== DASAR NORMATIF ===================== -->
+<section>
+  <p class="kicker">Dasar normatif</p>
+  <h2>What-if diakui sebagai metode PHA</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Amerika Serikat</h3>
+      <ul style="font-size:28px">
+        <li>OSHA 29 CFR 1910.119 (1992): analisis bahaya proses untuk bahan kimia berbahaya 10.000 pon atau lebih.</li>
+        <li>EPA 40 CFR 68 <em>Risk Management Plan</em> (1994) sejalan dengan PSM, dengan sasaran masyarakat dan lingkungan.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Britania dan standar konsensus</h3>
+      <ul style="font-size:28px">
+        <li>Sejak 1999 usaha di Britania wajib menilai risiko menurut HSE.</li>
+        <li>What-if tercantum pada ISO 31010:2019, Z590.3 <em>Prevention through Design</em>, dan ASSP TR-31010-2020.</li>
+      </ul>
+    </div>
+  </div>
+  <aside class="notes">Perbedaan yang layak ditanyakan ke kelas: di Britania penilaian risiko diwajibkan bagi usaha secara umum, sedangkan di Amerika Serikat hanya sedikit analisis bahaya yang diwajibkan hukum, dan dua pengecualian utamanya justru menyangkut bahan kimia sangat berbahaya. Konsekuensinya, di banyak sektor keselamatan proses bergantung pada komitmen sukarela perusahaan &mdash; dan di situlah mutu metode menjadi taruhan.</aside>
+</section>
+
+<!-- ===================== TABLE 7.1 ===================== -->
+<section>
+  <p class="kicker">Metode</p>
+  <h2>What-if: satu dari enam metode pada OSHA 1910.119(e)(2)</h2>
+  <table style="font-size:24px">
+    <thead><tr><th>Metode</th><th>Deskripsi</th></tr></thead>
+    <tbody>
+      <tr><td>What-If</td><td>tim multiskill menyoal dan menjawab rangkaian pertanyaan bagaimana bila</td></tr>
+      <tr><td>Checklist</td><td>membandingkan proses dengan kode dan standar</td></tr>
+      <tr><td>What-If/Checklist</td><td>kreativitas what-if digabung sistematika checklist</td></tr>
+      <tr><td>HAZOP</td><td>telaah terstruktur memakai kata bantu atas penyimpangan rancangan</td></tr>
+      <tr><td>FMEA</td><td>cara sistem dan komponennya gagal beserta efeknya</td></tr>
+      <tr><td>FTA</td><td>faktor penyumbang satu kejadian tak diinginkan</td></tr>
+    </tbody>
+  </table>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), Tabel 7.1.</p>
+  <aside class="notes">Perhatikan baris What-If dan baris What-If/Checklist: penulis sumber mencatat bahwa what-if memiliki struktur yang relatif longgar dan hanya seefektif kualitas pertanyaan serta jawabannya, sedangkan gabungan what-if dan checklist justru dipakai untuk saling menutup kelemahan masing-masing. Itu petunjuk pertama bahwa kelemahan what-if adalah kelemahannya pada struktur.</aside>
+</section>
+
+<!-- ===================== ENAM PENERAPAN ===================== -->
+<section>
+  <p class="kicker">Penerapan</p>
+  <h2>Enam situasi tempat what-if paling berguna</h2>
+  <div class="cols">
+    <div class="col">
+      <ol style="font-size:28px">
+        <li>Telaah keselamatan rancangan fasilitas, sistem, dan alat baru.</li>
+        <li>Pengadaan teknologi, alat, atau bahan baru.</li>
+        <li>Operasi keselamatan proses yang memuat bahan kimia berbahaya.</li>
+      </ol>
+    </div>
+    <div class="col">
+      <ol start="4" style="font-size:28px">
+        <li>Prosedur pengendalian perubahan.</li>
+        <li>Kegiatan bukan rutin: pemasangan, perbaikan, penghentian alat.</li>
+        <li>Kajian ancaman kelangsungan usaha dan latihan meja.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:24px">Paling bermanfaat bila dipakai pada <strong>fase rancangan</strong>, dan dapat dipakai kapan pun sepanjang daur hidup sistem.</div>
+  <aside class="notes">Enam butir ini berasal dari daftar pada bab 7. Tiga butir pertama menjelaskan mengapa metode ini sering muncul di proyek, dan tiga butir terakhir menjelaskan mengapa ia sering muncul di pengendalian perubahan dan kesiapsiagaan. Tanyakan ke kelas: pada butir mana di kampus atau tempat kerja mereka metode ini sudah dipakai tanpa disebut sebagai what-if?</aside>
+</section>
+
+<!-- ===================== KEKUATAN PADA TIM ===================== -->
+<section>
+  <p class="kicker">Syarat mutu</p>
+  <h2>Metode ini bergantung seberapa kompeten tim yang menjalankannya</h2>
+  <div class="cols">
+    <div class="col">
+      <ul>
+        <li>Bergantung besar pada pengalaman dan pengetahuan tim.</li>
+        <li>Menuntut fasilitator berpengalaman dan <em>subject matter expert</em> pada sistem yang dikaji.</li>
+        <li>Menuntut juru catat yang merekam temuan selama diskusi berlangsung.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <div class="callout"><strong>Rumusan sumber.</strong> Metode ini struktur-nya longgar, dan hasilnya hanya sebaik kualitas pertanyaan yang diajukan beserta jawaban yang diberikan.</div>
+    </div>
+  </div>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), bab 7 dan Table 7.1.</p>
+  <aside class="notes">Kalimat pada kotak sorot adalah terjemahan dari rumusan pada sumber, dan sebaiknya dibacakan apa adanya karena ia merangkum seluruh kelemahan metode ini. Tekankan bahwa konsekuensi praktisnya bukan sekadar hasil yang kurang tajam: tim yang tidak berpengalaman dapat menilai peristiwa serius sebagai nyaris celaka, sehingga rekomendasinya berhenti pada penambahan prosedur dan pelatihan. Kasus di bagian 05 memperlihatkan akibat dari penilaian seperti itu.</aside>
+</section>
+
+<!-- ===================== BAGIAN 02 ===================== -->
+<section class="section-slide">
+  <p class="ghost">02</p>
+  <p class="kicker">Bagian dua</p>
+  <h2>Proses sepuluh langkah</h2>
+  <aside class="notes">Bagian ini adalah inti keterampilan: sepuluh langkah yang harus dijalankan berurutan. Tekankan di awal bahwa langkah 1 sampai 5 adalah persiapan, dan justru di sanalah analisis paling sering gagal karena dikerjakan tergesa-gesa.</aside>
+</section>
+
+<!-- ===================== FIGURE 7.1 ===================== -->
+<section>
+  <p class="kicker">Peta proses</p>
+  <h2>Prosesnya berbentuk siklus, bukan garis lurus</h2>
+  <div class="cols">
+    <div class="col" style="flex:0 0 520px">
+      <figure>
+        <img src="figures/fig7-1-process-steps.png" alt="Diagram siklik sepuluh langkah analisis what-if: menetapkan maksud dan lingkup, membentuk tim, mengomunikasikan tujuan, mengumpulkan informasi, memecah menjadi tugas, menyusun pertanyaan bagaimana bila, mengidentifikasi bahaya dan pengendalian, memilih pengendalian tambahan, mengomunikasikan hasil, dan mendokumentasikan temuan." style="max-height:440px">
+      </figure>
+    </div>
+    <div class="col">
+      <div class="callout"><strong>Perhatikan arah panahnya.</strong> Kotak terakhir bukan akhir dari segalanya: hasil dokumentasi menjadi masukan bagi peninjauan lingkup pada siklus berikutnya.</div>
+      <div class="callout"><strong>Akibatnya.</strong> Lembar what-if adalah dokumen hidup; ia diperbarui ketika sistem, alat, atau prosedurnya berubah.</div>
+    </div>
+  </div>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), Gambar 7.1 &mdash; &copy; Wiley. Nama tiap kotak ada pada dua slide berikutnya.</p>
+  <aside class="notes">Nama kesepuluh kotak ditulis pada dua slide berikutnya, karena kotak-kotak pada gambar ini tetap terlalu kecil untuk dibaca penuh saat diproyeksikan. Yang perlu ditangkap dari gambar ini adalah bentuknya: melingkar, dengan panah yang kembali ke awal. Bandingkan dengan kebiasaan di lapangan, yang memperlakukan lembar analisis sebagai dokumen sekali jadi yang disimpan setelah ditandatangani.</aside>
+</section>
+
+<!-- ===================== LANGKAH 1-5 ===================== -->
+<section>
+  <p class="kicker">Langkah 1&ndash;5</p>
+  <h2>Lima langkah pertama adalah pekerjaan persiapan</h2>
+  <ol style="font-size:28px">
+    <li><strong>Tetapkan konteks.</strong> Rumuskan maksud, lingkup, batas, tingkat kerincian, dan kriterianya.</li>
+    <li><strong>Bentuk tim.</strong> Tim lintas fungsi yang terlatih, ditambah fasilitator dan juru catat.</li>
+    <li><strong>Komunikasikan tujuan.</strong> Maksud, lingkup, batas, peran, dan definisi disampaikan ke tim.</li>
+    <li><strong>Kumpulkan informasi.</strong> Gambar dan instrumentasi, skema, manual, panduan pemeliharaan, riwayat insiden.</li>
+    <li><strong>Pecah menjadi tugas atau elemen.</strong> Kegiatan diuraikan menjadi langkah berurutan.</li>
+  </ol>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), bab 7, langkah 1&ndash;5.</p>
+  <aside class="notes">Langkah 4 adalah tempat paling banyak analisis berkualitas rendah dimulai: tim menyusun pertanyaan tanpa membaca gambar dan instrumentasi, sehingga pertanyaannya melayang. Sebutkan bahwa tim juga diminta mengamati langsung kegiatan atau sistem bila sudah ada &mdash; pengamatan lapangan sering memunculkan pertanyaan yang tidak terpikirkan di ruang rapat. Pada langkah 2, susunan tim yang disebut sumber mencakup disiplin rekayasa, rancangan, produksi, operasi, pemeliharaan, serta keselamatan dan kesehatan kerja.</aside>
+</section>
+
+<!-- ===================== LANGKAH 6-10 ===================== -->
+<section>
+  <p class="kicker">Langkah 6&ndash;10</p>
+  <h2>Lima langkah berikutnya menghasilkan dan menutup temuan</h2>
+  <ol start="6" style="font-size:28px">
+    <li><strong>Susun pertanyaan.</strong> Tiap tugas ditanyai satu per satu: gangguan prosedur, salah komunikasi, kesalahan operator, kegagalan alat.</li>
+    <li><strong>Identifikasi bahaya, penyebab, pengendalian, konsekuensi.</strong> Menjawab tiap pertanyaan menghasilkan keempatnya.</li>
+    <li><strong>Pilih pengendalian tambahan.</strong> Bila belum terkendali, pilih mengikuti hierarki pengendalian.</li>
+    <li><strong>Komunikasikan hasil.</strong> Lembar difinalkan dan rekomendasinya disampaikan kepada pengambil keputusan.</li>
+    <li><strong>Dokumentasikan temuan.</strong> Lembar menjadi rencana aksi: penanggung jawab dan tenggat.</li>
+  </ol>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), bab 7, langkah 6&ndash;10.</p>
+  <aside class="notes">Tiga hal yang perlu ditekankan. Pertama, pada langkah 6 juru catat menuliskan setiap pertanyaan pada flipchart atau proyeksi laptop yang terlihat seluruh tim, karena pertanyaan baru muncul saat daftar lama dibaca. Kedua, pada langkah 8 pemilihan pengendalian mengikuti hierarki pengendalian dengan kecenderungan memilih pengendalian tingkat tinggi yang lebih andal. Ketiga, pada langkah 10 lembar itu berubah peran menjadi rencana aksi &mdash; dan itulah yang membuat analisis berpengaruh.</aside>
+</section>
+
+<!-- ===================== PERAN TIM ===================== -->
+<section>
+  <p class="kicker">Peran</p>
+  <h2>Tiga peran yang harus ada sejak langkah pertama</h2>
+  <table style="font-size:24px">
+    <thead><tr><th>Peran</th><th>Tanggung jawab</th></tr></thead>
+    <tbody>
+      <tr><td>Fasilitator</td><td>memimpin pertanyaan, menyempurnakan daftar, menjaga tim pada tujuan</td></tr>
+      <tr><td>Juru catat</td><td>merekam setiap pertanyaan dan jawaban selama diskusi berlangsung</td></tr>
+      <tr><td>Anggota lintas fungsi</td><td>membawa pengetahuan rancangan, operasi, pemeliharaan, dan K3</td></tr>
+    </tbody>
+  </table>
+  <div class="callout" style="margin-top:24px"><strong>Yang dicari pada anggota tim.</strong> Pengetahuan standar rancangan, kode regulasi, potensi kesalahan operasi, riwayat insiden, kebutuhan pemeliharaan, dan pengalaman praktis lain.</div>
+  <aside class="notes">Peran juru catat paling sering diabaikan, padahal tanpa pencatatan langsung diskusinya kehilangan pertanyaan-pertanyaan yang muncul di tengah. Tanyakan ke kelas: dalam rapat keselamatan di tempat kerja mereka, siapa yang menulis? Bila jawabannya adalah orang yang juga memimpin rapat, biasanya catatannya tidak lengkap.</aside>
+</section>
+
+<!-- ===================== BAGIAN 03 ===================== -->
+<section class="section-slide">
+  <p class="ghost">03</p>
+  <p class="kicker">Bagian tiga</p>
+  <h2>Lembar what-if tradisional</h2>
+  <aside class="notes">Bagian ini memperkenalkan bentuk lembar yang paling dikenal di lapangan, lalu menutupnya dengan kelemahan mendasar yang menjadi alasan keberadaan SWIFRA. Pastikan mahasiswa memahami kelemahannya sebelum melanjutkan ke bagian 04.</aside>
+</section>
+
+<!-- ===================== FIGURE 7.2 ===================== -->
+<section>
+  <p class="kicker">Lembar tradisional</p>
+  <h2>Lembar tradisional hanya menampung enam kolom</h2>
+  <figure>
+    <img src="figures/fig7-2-traditional-form.png" alt="Contoh lembar analisis bahaya what-if tradisional dengan kepala lembar berisi nama fasilitas, tanggal, dan tim, lalu bagian proses dengan kolom nomor, pertanyaan bagaimana bila, penyebab, konsekuensi, pengendalian, dan rekomendasi." style="max-height:400px">
+    <figcaption>Kepala lembar memuat fasilitas, tanggal, dan susunan tim; badan lembar memuat satu baris per pertanyaan. Sumber: Lyon &amp; Popov (2022), Gambar 7.2 &mdash; &copy; Wiley.</figcaption>
+  </figure>
+  <aside class="notes">Tunjukkan bahwa kolom sebab dan kolom akibat berdiri sejajar, dan tidak ada tempat untuk menuliskan seberapa besar risikonya. Itulah yang nanti diperbaiki oleh SWIFRA. Minta mahasiswa menghitung sendiri: ada enam kolom isi, dan tidak satu pun berisi angka tingkat risiko.</aside>
+</section>
+
+<!-- ===================== MEMBACA LEMBAR TRADISIONAL ===================== -->
+<section>
+  <p class="kicker">Lembar tradisional</p>
+  <h2>Enam kolom itu dibaca sebagai satu baris penalaran</h2>
+  <table style="font-size:24px">
+    <thead><tr><th>Kolom</th><th>Isi</th></tr></thead>
+    <tbody>
+      <tr><td>ID#</td><td>nomor baris, dipakai merujuk tindak lanjut</td></tr>
+      <tr><td>What-If?</td><td>pertanyaan tunggal yang dapat dijawab</td></tr>
+      <tr><td>Causes</td><td>apa yang membuatnya mungkin terjadi</td></tr>
+      <tr><td>Consequences</td><td>apa yang terjadi bila pertanyaan itu menjadi nyata</td></tr>
+      <tr><td>Controls</td><td>pengendalian yang sudah terpasang sekarang</td></tr>
+      <tr><td>Recommendations</td><td>pengendalian tambahan yang diusulkan</td></tr>
+    </tbody>
+  </table>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), Gambar 7.2.</p>
+  <aside class="notes">Perhatikan bahwa penyebab dan konsekuensi diletakkan pada satu baris yang sama, dan tidak ada kolom untuk menilai apakah konsekuensi itu dapat diterima. Akibatnya baris yang memuat kematian dan baris yang memuat kerusakan perancah terlihat setara di atas kertas &mdash; padahal keduanya menuntut keputusan pengendalian yang sangat berbeda.</aside>
+</section>
+
+<!-- ===================== MANFAAT DAN BATAS ===================== -->
+<section>
+  <p class="kicker">Manfaat dan batas</p>
+  <h2>Metode ini mudah dipakai, tetapi sukar dipertanggungjawabkan</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Manfaat</h3>
+      <ul style="font-size:28px">
+        <li>Mudah diterapkan pada hampir semua situasi atau sistem.</li>
+        <li>Membuka peluang pemangku kepentingan tanpa latar penilaian risiko untuk ikut memberi masukan.</li>
+        <li>Umumnya menambah pemahaman mendalam tentang sistem.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Batasan</h3>
+      <ul style="font-size:28px">
+        <li>Berguna hanya bila pertanyaannya tepat.</li>
+        <li>Bersandar pada intuisi dan pengalaman.</li>
+        <li>Hasilnya sukar diubah menjadi argumen yang meyakinkan.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), bab 7.</p>
+  <aside class="notes">Kedua kolom ini berasal dari daftar yang sama pada sumber, jadi bacakan berpasangan: manfaat pertama berpasangan dengan batasan pertama, dan seterusnya. Dua baris pertama sebenarnya menjelaskan mengapa metode ini populer sekaligus mengapa hasilnya sering tidak mengubah apa pun &mdash; kemudahan pemakaian dan keterbukaan bagi pemangku kepentingan itulah yang sekaligus membuat standar buktinya rendah.</aside>
+</section>
+
+<!-- ===================== KELEMAHAN TERBESAR ===================== -->
+<section>
+  <p class="kicker">Titik balik</p>
+  <h2>Kelemahan terbesarnya: ini analisis bahaya, bukan penilaian risiko</h2>
+  <blockquote>What-if tradisional tidak memuat fungsi penaksiran risiko.</blockquote>
+  <div class="cols" style="margin-top:28px">
+    <div class="col">
+      <div class="callout fragment"><strong>Akibat pertama.</strong> Analisisnya tidak membedakan bahaya yang satu dari yang lain, dan tidak menghasilkan urutan prioritas tingkat risiko.</div>
+    </div>
+    <div class="col">
+      <div class="callout fragment"><strong>Akibat kedua.</strong> Setiap bahaya dipandang setara, sehingga upaya dan sumber daya penurunan risiko sukar diprioritaskan.</div>
+    </div>
+  </div>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), bagian 7.5. Analisis bahaya memang menemukan bahaya, tetapi tidak memberi informasi berbasis risiko yang dibutuhkan untuk memprioritaskan dan mengelola risiko.</p>
+  <aside class="notes">Ini slide terpenting pada bagian ketiga dan sebaiknya tidak dilewatkan cepat. Rumuskan ulang dengan bahasa sendiri: analisis bahaya menjawab bahaya apa yang ada, sedangkan penilaian risiko menjawab seberapa besar risikonya dan mana yang harus didahulukan. Tim yang hanya memiliki daftar bahaya akan menyerahkan seluruh baris ke manajemen tanpa urutan, dan manajemen memilih berdasarkan biaya atau kemudahan, bukan berdasarkan risiko. Bagian berikutnya memperbaiki hal ini.</aside>
+</section>
+
+<!-- ===================== BAGIAN 04 ===================== -->
+<section class="section-slide">
+  <p class="ghost">04</p>
+  <p class="kicker">Bagian empat</p>
+  <h2>SWIFRA: what-if terstruktur dengan taksiran risiko</h2>
+  <aside class="notes">SWIFRA adalah singkatan dari structured what-if risk assessment. Namanya menjelaskan seluruh perbedaannya: what-if yang diberi struktur, lalu diberi penilaian risiko. Bagian ini adalah jawaban langsung atas kelemahan yang ditutup pada bagian tiga.</aside>
+</section>
+
+<!-- ===================== APA YANG DITAMBAHKAN ===================== -->
+<section>
+  <p class="kicker">Yang ditambahkan</p>
+  <h2>SWIFRA menambahkan taksiran risiko dan dua pertanyaan lanjutan</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Dua penambahan</h3>
+      <ul style="font-size:28px">
+        <li>Taksiran risiko kualitatif atau semikuantitatif pada tiap skenario, sehingga risiko dapat diperingkat.</li>
+        <li>Pertanyaan diperluas: bukan hanya &ldquo;bagaimana bila&rdquo;, tetapi juga <strong>bagaimana</strong> dan <strong>mengapa</strong> skenario itu dapat terjadi.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Guna tiga pertanyaan itu</h3>
+      <div class="callout">Rangkaian apa&ndash;bagaimana&ndash;mengapa membuka faktor penyebab sistemik di bawah penyebab yang tampak, serupa dengan metode lima mengapa.</div>
+    </div>
+  </div>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), bagian 7.5.</p>
+  <aside class="notes">Perbedaan antara penyebab yang tampak dan faktor sistemik adalah kunci bagian ini. &ldquo;Prosedur start-up tidak diikuti&rdquo; adalah penyebab yang tampak; &ldquo;pengawasan dan penegakan yang lemah&rdquo; adalah faktor sistemiknya. Pertanyaan mengapa itulah yang menuntun ke faktor kedua, dan hanya faktor kedua yang dapat diperbaiki secara permanen. Bandingkan dengan bagian 05, ketika kedua jenis faktor itu muncul berdampingan pada satu baris SWIFRA.</aside>
+</section>
+
+<!-- ===================== LANGKAH SWIFRA 1-4 ===================== -->
+<section>
+  <p class="kicker">Langkah SWIFRA 1&ndash;4</p>
+  <h2>Empat langkah pertama menyiapkan dan mengisi lembar</h2>
+  <ol style="font-size:28px">
+    <li><strong>Susun pertanyaannya.</strong> Kumpulkan informasi lewat telaah dokumen, wawancara, insiden lampau, dan pengamatan; susun daftar pertanyaan yang relevan.</li>
+    <li><strong>Buat lembar kerjanya.</strong> Fasilitator memuat daftar pertanyaan ke dalam lembar SWIFRA.</li>
+    <li><strong>Jawab apa&ndash;bagaimana&ndash;mengapa.</strong> Tim menelusuri efek berantai dan penyebabnya tiap pertanyaan, lalu mengisi kolomnya.</li>
+    <li><strong>Identifikasi pengendalian yang ada.</strong> Pengendalian terpasang dicatat beserta keandalan dan efektivitasnya.</li>
+  </ol>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), bagian 7.5, langkah 1&ndash;4.</p>
+  <aside class="notes">Perhatikan langkah 3: tim diminta mempertimbangkan efek berantai, bukan berhenti pada konsekuensi pertama. Inilah yang membedakan analisis dalam dari analisis dangkal, dan pada kasus bagian 05 efek berantai itulah yang mengubah penilaian dari nyaris celaka menjadi katastrofik. Pada langkah 4, kata keandalan dan efektivitas penting: pengendalian yang tercatat ada belum tentu masih berfungsi.</aside>
+</section>
+
+<!-- ===================== LANGKAH SWIFRA 5-8 ===================== -->
+<section>
+  <p class="kicker">Langkah SWIFRA 5&ndash;8</p>
+  <h2>Empat langkah berikutnya menilai dan menurunkan risiko</h2>
+  <ol start="5" style="font-size:28px">
+    <li><strong>Analisis risiko.</strong> Tim menaksir kemungkinan, keparahan, dan tingkat risiko tiap baris.</li>
+    <li><strong>Evaluasi risiko.</strong> Tingkat risiko dibandingkan dengan kriteria, lalu ditetapkan dapat diterima atau tidak.</li>
+    <li><strong>Tambahkan pengendalian.</strong> Pengendalian dipilih mengikuti hierarki pengendalian, dengan mempertimbangkan efektivitas, keandalan, dan kelayakan.</li>
+    <li><strong>Analisis penurunan risiko.</strong> Ditaksir kemungkinan kedua, keparahan kedua, tingkat risiko kedua, dan persentase penurunan risiko.</li>
+  </ol>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), bagian 7.5, langkah 5&ndash;8.</p>
+  <aside class="notes">Langkah 8 adalah yang paling jarang ditemukan pada praktik lapangan: menaksir ulang risiko setelah pengendalian ditambahkan. Tanpa langkah ini, usulan pengendalian tidak dapat dibandingkan efektivitasnya, dan persentase penurunan risiko tidak dapat dihitung. Ingatkan bahwa angka kedua ini ditaksir dengan pengendalian yang benar-benar terpasang, bukan diasumsikan berhasil.</aside>
+</section>
+
+<!-- ===================== FIGURE 7.3 ===================== -->
+<section>
+  <p class="kicker">Lembar SWIFRA</p>
+  <h2>Lembar SWIFRA memuat kolom yang tidak ada pada lembar tradisional</h2>
+  <figure>
+    <img src="figures/fig7-3-swifra-worksheet.png" alt="Lembar kerja SWIFRA dengan kolom nomor, pertanyaan bagaimana bila, konsekuensi yang dihasilkan, pertanyaan bagaimana dan mengapa, pengendalian saat ini, nilai kemungkinan, keparahan, tingkat risiko, keterterimaan tingkat risiko, pengendalian tambahan, kemungkinan kedua, keparahan kedua, tingkat risiko kedua, dan persentase penurunan risiko." style="max-height:300px">
+    <figcaption>Lembar dikepalai nama tugas atau elemen yang dikaji. Sumber: Lyon &amp; Popov (2022), Gambar 7.3 &mdash; &copy; Wiley.</figcaption>
+  </figure>
+  <aside class="notes">Minta mahasiswa membandingkan lembar ini dengan lembar pada Gambar 7.2 dan menyebutkan kolom-kolom baru. Yang bertambah ada lima kelompok: pertanyaan bagaimana dan mengapa, kemungkinan, keparahan, tingkat risiko beserta keterterimaannya, dan blok penilaian ulang beserta persentase penurunan risiko. Kepala lembarnya juga berubah: bukan lagi nama fasilitas, melainkan nama tugas atau elemen yang dikaji &mdash; satu lembar per tugas.</aside>
+</section>
+
+<!-- ===================== MEMBACA LEMBAR SWIFRA ===================== -->
+<section>
+  <p class="kicker">Lembar SWIFRA</p>
+  <h2>Empat kolom terakhir adalah tempat keputusan dipertanggungjawabkan</h2>
+  <table style="font-size:24px">
+    <thead><tr><th>Kelompok kolom</th><th>Isi</th></tr></thead>
+    <tbody>
+      <tr><td>Bagaimana dan mengapa</td><td>mekanisme kegagalan, lalu faktor sistemiknya</td></tr>
+      <tr><td>L, S, tingkat risiko</td><td>kemungkinan, keparahan, dan hasil kalinya</td></tr>
+      <tr><td>Dapat diterima</td><td>ya atau tidak, menurut kriteria yang ditetapkan</td></tr>
+      <tr><td>Pengendalian tambahan, L2, S2, tingkat risiko 2, % penurunan</td><td>usulan pengendalian dan taksiran hasilnya</td></tr>
+    </tbody>
+  </table>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), Gambar 7.3.</p>
+  <aside class="notes">Tunjuk perbedaan peran antara kolom tingkat risiko dan kolom dapat diterima: yang pertama adalah hasil hitungan, yang kedua adalah keputusan terhadap kriteria. Sebuah baris dapat memiliki tingkat risiko yang sama di dua lokasi berbeda namun berbeda status keterterimaannya, bila kriterianya memang berbeda. Kolom persentase penurunan risiko adalah bahasa yang paling mudah dipahami manajemen, karena langsung menyatakan besar manfaat pengendalian yang diusulkan.</aside>
+</section>
+
+<!-- ===================== TABLE 7.2 ===================== -->
+<section>
+  <p class="kicker">Kriteria risiko</p>
+  <h2>Kriteria risikonya adalah matriks lima kali empat</h2>
+  <figure>
+    <img src="figures/table7-2-risk-matrix.png" alt="Matriks risiko lima kali empat berwarna: baris berisi lima tingkat kemungkinan dari jarang sampai sering, kolom berisi empat tingkat keparahan dari dapat diabaikan sampai katastrofik, dan setiap sel berisi hasil kali, nama tingkat risiko, serta perintah tindakan." style="max-height:420px">
+    <figcaption>Sumber: Lyon &amp; Popov (2022), Tabel 7.2 &mdash; &copy; Wiley.</figcaption>
+  </figure>
+  <aside class="notes">Matriks ini adalah contoh, bukan standar wajib. Sumber menegaskan bahwa angka pada matriks hanyalah ilustrasi dan bahwa kriteria risiko harus ditetapkan lebih dahulu sebagai bagian dari konteks organisasi. Minta mahasiswa memperhatikan bahwa sel yang rendah dan sel yang tinggi berbeda bukan hanya pada angkanya tetapi pada perintah tindakannya &mdash; dan perintah tindakan itulah yang sebenarnya mengikat.</aside>
+</section>
+
+<!-- ===================== SKALA KEPARAHAN ===================== -->
+<section>
+  <p class="kicker">Skala keparahan</p>
+  <h2>Empat tingkat keparahan diikat pada cedera dan kerugian</h2>
+  <table style="font-size:24px">
+    <thead><tr><th>Tingkat</th><th>Definisi pada sumber</th></tr></thead>
+    <tbody>
+      <tr><td>Negligible (N)</td><td>pertolongan pertama atau perawatan medis minor; kerugian di bawah $1K</td></tr>
+      <tr><td>Marginal (M)</td><td>cedera ringan, insiden dengan hari kerja hilang; kerugian di atas $1K</td></tr>
+      <tr><td>Critical (C)</td><td>disabilitas tiga bulan; rawat inap tiga orang; kerugian di atas $50K</td></tr>
+      <tr><td>Catastrophic (CAT)</td><td>kematian; disabilitas total permanen; kerugian di atas $250K</td></tr>
+    </tbody>
+  </table>
+  <p class="table-source">Ambang kerugian mengikuti mata uang sumber; organisasi menetapkan ambangnya sendiri. Sumber: Lyon &amp; Popov (2022), Tabel 7.2.</p>
+  <aside class="notes">Tunjukkan bahwa tiap tingkat memuat dua jenis ukuran sekaligus: dampak pada manusia dan kerugian ekonomi. Bila keduanya tidak sejalan &mdash; misalnya cedera ringan dengan kerugian sangat besar karena kehilangan produksi &mdash; tim harus memutuskan ukuran mana yang mengikat, dan keputusan itu sebaiknya ditetapkan sebelum penilaian, bukan saat penilaian. Ambang dalam dolar pada sumber ini juga harus diganti dengan ambang yang masuk akal bagi organisasi setempat.</aside>
+</section>
+
+<!-- ===================== SKALA KEMUNGKINAN ===================== -->
+<section>
+  <p class="kicker">Skala kemungkinan</p>
+  <h2>Lima tingkat kemungkinan diikat pada riwayat kejadian</h2>
+  <table style="font-size:24px">
+    <thead><tr><th>Tingkat</th><th>Definisi pada sumber</th></tr></thead>
+    <tbody>
+      <tr><td>Frequent (F) &mdash; 5</td><td>hampir pasti terjadi bila terpapar; lebih dari sekali dalam 12 bulan terakhir</td></tr>
+      <tr><td>Probable (P) &mdash; 4</td><td>sangat mungkin; terjadi dalam 12 bulan terakhir</td></tr>
+      <tr><td>Occasional (O) &mdash; 3</td><td>mungkin; terjadi dalam 24 bulan terakhir</td></tr>
+      <tr><td>Remote (R) &mdash; 2</td><td>dapat terjadi; terjadi dalam 36 bulan terakhir</td></tr>
+      <tr><td>Improbable (I) &mdash; 1</td><td>tidak mungkin; belum terjadi dalam lima tahun</td></tr>
+    </tbody>
+  </table>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), Tabel 7.2.</p>
+  <aside class="notes">Perhatikan bahwa kelima tingkat ini dinyatakan dalam riwayat kejadian, bukan dalam perasaan tim. Inilah yang membuat penilaian dapat diaudit: bila sebuah baris diberi nilai Occasional, tim harus dapat menunjukkan kejadiannya dalam 24 bulan terakhir. Ajukan pertanyaan sulit ke kelas: bagaimana menilai kemungkinan untuk kejadian yang belum pernah terjadi sama sekali di organisasi? Jawaban yang diharapkan adalah memakai data sejenis dari industri atau memakai tingkat Improbable dengan catatan asumsi.</aside>
+</section>
+
+<!-- ===================== TINGKAT RISIKO ===================== -->
+<section>
+  <p class="kicker">Tingkat risiko</p>
+  <h2>Empat Tingkat Risiko</h2>
+  <table style="font-size:24px">
+    <thead><tr><th>Tingkat</th><th>Nilai</th><th>Tindakan yang diperintahkan</th></tr></thead>
+    <tbody>
+      <tr><td>Low</td><td>1&ndash;3</td><td>dapat diterima; perbaikan berkelanjutan</td></tr>
+      <tr><td>Medium</td><td>4&ndash;6</td><td>tindakan perbaikan disarankan</td></tr>
+      <tr><td>Serious</td><td>8&ndash;10</td><td>prioritas tinggi; tindakan diperlukan</td></tr>
+      <tr><td>High</td><td>12&ndash;20</td><td>tidak diizinkan; tindakan segera diperlukan</td></tr>
+    </tbody>
+  </table>
+  <div class="callout" style="margin-top:24px"><strong>Nilai 7 dan 11 tidak dapat dicapai</strong> pada matriks ini, karena matriks hanya memuat tingkat risiko yang telah ditetapkan pada tiap sel.</div>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), Tabel 7.2.</p>
+  <aside class="notes">Bacakan kolom tindakan sebagai kalimat perintah, karena itulah fungsi praktisnya: tingkat rendah mengizinkan pekerjaan berjalan dengan perbaikan berkelanjutan, sedangkan tingkat tinggi menyatakan pekerjaannya tidak diizinkan. Perhatikan juga bahwa matriks ini menetapkan tingkat risiko per sel, bukan semata hasil perkalian; itulah sebabnya nilai 5 dengan keparahan dapat diabaikan masuk tingkat Medium, sedangkan nilai 4 dengan keparahan katastrofik juga Medium &mdash; dua hal yang berbeda makna.</aside>
+</section>
+
+<!-- ===================== BAGIAN 05 ===================== -->
+<section class="section-slide">
+  <p class="ghost">05</p>
+  <p class="kicker">Bagian lima</p>
+  <h2>Studi kasus: ledakan tangki limbah pestisida</h2>
+  <aside class="notes">Kasus ini dipakai penulis bab untuk memperlihatkan selisih hasil antara what-if tradisional dan SWIFRA. Seluruh fakta pada bagian ini berasal dari laporan investigasi CSB tahun 2011, dan gambar-gambarnya berasal dari laporan yang sama serta dari buku sumber. Karena kasusnya memuat dua kematian, bacakan fakta secara tenang dan tanpa dramatisasi.</aside>
+</section>
+
+<!-- ===================== REKAMAN SUMBER ===================== -->
+<section>
+  <p class="kicker">Rekaman sumber</p>
+  <h2>Beginilah laporan resminya menguraikan peristiwa itu</h2>
+  <figure>
+    <img src="figures/csb-summary-excerpt.png" alt="Excerpt of section 7.8 CSB Investigation Summary: pada 28 Agustus 2008 sekitar pukul 22.35 terjadi reaksi liar di dalam bejana bertekanan 4500 galon yang disebut residue treater, bejana tersebut pecah hebat pada unit methomyl di Institute, West Virginia; pelarut mudah terbakar menyembur dari bejana lalu menyala, dan apinya terbakar lebih dari empat jam sebelum dikendalikan oleh regu pemadam beserta bantuan sukarelawan dan pemadam kota." style="max-height:400px">
+  </figure>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), sub-bab 7.8 &ldquo;CSB Investigation Summary&rdquo; &mdash; &copy; Wiley. Seluruh rincian berikutnya dikutip dari laporan investigasi CSB (2011).</p>
+  <aside class="notes">Excerpt ini adalah dokumen sumbernya: satu paragraf dari sub-bab 7.8 yang menguraikan peristiwa secara ringkas. Tarik perhatian ke tiga fakta kunci, yaitu tanggal dan jam kejadian, bejana bertekanan 4500 galon, serta api yang terbakar lebih dari empat jam. Tekankan bahwa uraian pada slide-slide berikutnya hanya merangkum apa yang tertulis di sini, sehingga mahasiswa dapat memverifikasinya sendiri.</aside>
+</section>
+
+
+<!-- ===================== PERTANYAAN PEMBUKA KASUS ===================== -->
+<section>
+  <p class="kicker">Studi kasus</p>
+  <h2>Bagaimana bila perusahaan menjalankan analisis ini sebelum kejadian?</h2>
+  <p style="font-size:28px">Pertanyaan itulah yang diajukan penulis bab kepada pembacanya, dan jawabannya dipakai untuk mengukur manfaat kedua metode.</p>
+  <div class="callout"><strong>Perbandingan yang akan kita lakukan.</strong> Satu tugas yang sama, yaitu start-up unit methomyl, dibaca dua kali: sekali dengan lembar tradisional, sekali dengan lembar SWIFRA. Perhatikan bahwa yang berubah bukan hanya bentuk lembar, melainkan kesimpulan yang dapat diambil darinya.</div>
+  <aside class="notes">Sampaikan aturan mainnya: seluruh fakta dirilis sebelum analisis dimulai, dan mahasiswa diminta menahan diri dari membaca laporan CSB sampai tiba saatnya. Ini disiplin yang sama dengan metode kasus pada pertemuan sebelumnya, dan tujuannya sama &mdash; supaya yang ditulis adalah analisis, bukan salinan laporan.</aside>
+</section>
+
+<!-- ===================== FAKTA INSIDEN ===================== -->
+<section>
+  <p class="kicker">Fakta</p>
+  <h2>Bejana bertekanan pecah saat unit dinyalakan ulang</h2>
+  <table style="font-size:24px">
+    <thead><tr><th>Aspek</th><th>Fakta</th></tr></thead>
+    <tbody>
+      <tr><td>Tempat dan waktu</td><td>unit methomyl, Institute, Virginia Barat, 28 Agustus 2008, pukul 22.35</td></tr>
+      <tr><td>Peristiwa</td><td>reaksi liar di residue treater 4.500 galon; bejana pecah</td></tr>
+      <tr><td>Akibat langsung</td><td>sekitar 2.200 galon pelarut dan residu menyembur lalu terbakar</td></tr>
+      <tr><td>Korban</td><td>dua pekerja meninggal: satu di lokasi, satu 41 hari kemudian</td></tr>
+      <tr><td>Korban lain</td><td>enam petugas pemadam dan dua kontraktor dirawat karena paparan</td></tr>
+    </tbody>
+  </table>
+  <p class="table-source">Sumber: CSB (2011), laporan akhir investigasi ledakan tangki limbah pestisida.</p>
+  <aside class="notes">Satu perincian yang penting dan sering terlewat: kedua pekerja itu dikirim dari ruang kendali untuk menyelidiki mengapa tekanan residue treater naik, sehingga mereka berada di dekat bejana ketika bejana itu pecah. Artinya ada dua kegagalan berurutan &mdash; kehilangan kendali proses, lalu keputusan mengirim orang mendekati sumber bahaya tanpa perlindungan. Petunjuk ini berguna ketika mahasiswa menyusun barisnya sendiri.</aside>
+</section>
+
+<!-- ===================== KONTEKS ===================== -->
+<section>
+  <p class="kicker">Konteks</p>
+  <h2>Kejadian berlangsung saat unit dinyalakan ulang setelah perbaikan besar</h2>
+  <ul>
+    <li>Unit dinyalakan ulang setelah penghentian panjang untuk memperbarui sistem kendali dan mengganti residue treater.</li>
+    <li>Unit memakai metil isosianat untuk menghasilkan metomil &mdash; bahan yang sama dengan kasus Bhopal 1984.</li>
+    <li>Tangki harian metil isosianat berdiri 70 kaki dari residue treater, dilindungi selimut pelindung.</li>
+    <li>Tidak terjadi pelepasan metil isosianat: tangkinya tidak rusak.</li>
+  </ul>
+  <p class="table-source">Sumber: CSB (2011); Lyon &amp; Popov (2022), bagian 7.9.</p>
+  <aside class="notes">Konteks penghentian panjang dan pembaruan sistem kendali itu penting, karena di situlah peluang analisis paling besar: pengendalian perubahan pada sistem yang baru diganti adalah saat standar analisis paling sering diturunkan justru ketika risikonya paling tinggi. Sebutkan juga bahwa fakta tidak adanya pelepasan metil isosianat adalah hasil dari pengendalian yang berhasil, bukan kebetulan &mdash; dan pengendalian itulah yang nanti muncul sebagai salah satu temuan pada baris SWIFRA.</aside>
+</section>
+
+<!-- ===================== FIGURE 7.5 ===================== -->
+<section>
+  <p class="kicker">Bekas kejadian</p>
+  <h2>Kerusakan yang ditinggalkan menunjukkan skala energinya</h2>
+  <figure>
+    <img src="figures/fig7-5-treater-damage.jpg" alt="Foto kerusakan berat pada unit methomyl: rangka baja, perpipaan, dan saluran listrik terpelintir serta roboh di sekitar lokasi bejana yang pecah." style="max-height:410px">
+    <figcaption>Kerusakan luas pada unit dan sekitarnya. Sumber: CSB, laporan akhir, halaman 8 &mdash; dikutip melalui Lyon &amp; Popov (2022), Gambar 7.5.</figcaption>
+  </figure>
+  <aside class="notes">Gambar ini dipakai bukan untuk kesan dramatis, melainkan untuk menunjukkan dua hal teknis. Pertama, bejana seberat 5.700 pon itu mencabut perpipaan, saluran listrik, dan satu kolom penopang baja saat pecah. Kedua, pecahannya terlempar ratusan kaki ke segala arah. Kedua fakta itu yang membuat pertanyaan tentang efek berantai menjadi masuk akal, bukan berlebihan.</aside>
+</section>
+
+<!-- ===================== FIGURE 7.6 ===================== -->
+<section>
+  <p class="kicker">Bekas kejadian</p>
+  <h2>Satu pengendalian pasif menyelamatkan tangki di sebelahnya</h2>
+  <div class="cols">
+    <div class="col w40">
+      <figure>
+        <img src="figures/fig7-6-daytank-shield.jpg" alt="Foto struktur selimut pelindung berupa jaring kawat baja yang dipasang pada rangka baja di sekeliling tangki harian metil isosianat." style="max-height:300px">
+        <figcaption>Sumber: CSB, laporan akhir, halaman 9 &mdash; dikutip melalui Lyon &amp; Popov (2022), Gambar 7.6.</figcaption>
+      </figure>
+    </div>
+    <div class="col">
+      <div class="callout"><strong>Yang terjadi.</strong> Pecahan dari residue treater menghantam selimut pelindung itu dan api memancarkan panas hebat ke arahnya, tetapi tangki harian di dalamnya tidak rusak.</div>
+      <div class="callout"><strong>Mengapa penting.</strong> Selimut itu pengendalian pasif setingkat rekayasa: bekerja tanpa listrik, operator, dan prosedur.</div>
+    </div>
+  </div>
+  <aside class="notes">Ini contoh pengendalian tingkat tinggi yang paling mudah dijelaskan kepada mahasiswa, karena buktinya terlihat: setelah kejadian, perusahaan melepas selimut dan isolasi tangki lalu memeriksa dan menguji tekan tangki tersebut, dan tangki tidak menunjukkan bukti kerusakan panas. Bandingkan dengan usulan yang muncul dari analisis dangkal pada slide berikutnya, yaitu menambah prosedur dan pelatihan.</aside>
+</section>
+
+<!-- ===================== FAKTOR PENYEBAB ===================== -->
+<section>
+  <p class="kicker">Fakta</p>
+  <h2>Investigasi menemukan enam faktor penyebab dan penyumbang</h2>
+  <ol style="font-size:28px">
+    <li>Penyimpangan dari prosedur start-up tertulis.</li>
+    <li>Pengelakan alat keselamatan kritis yang dimaksudkan mencegah kondisi itu.</li>
+    <li>Telaah keselamatan pra-start-up yang tidak memadai.</li>
+    <li>Pelatihan operator yang tidak memadai atas sistem kendali yang baru dipasang.</li>
+    <li>Perubahan sementara yang tidak dievaluasi.</li>
+    <li>Peralatan yang rusak atau hilang.</li>
+  </ol>
+  <p class="table-source">Sumber: CSB (2011), dikutip pada Lyon &amp; Popov (2022), bagian 7.8.</p>
+  <aside class="notes">Perhatikan bahwa keenam faktor ini bersifat organisasional dan sistemik, bukan kesalahan teknis tunggal. Penyimpangan prosedur dan pengelakan alat keselamatan tidak mungkin terjadi berulang tanpa kondisi yang memungkinkan dan membiarkannya &mdash; dan kondisi itulah yang dicari oleh pertanyaan mengapa pada SWIFRA. Inilah sebabnya penulis bab menilai bahwa tim yang tidak berpengalaman akan berhenti pada dua faktor pertama.</aside>
+</section>
+
+<!-- ===================== FIGURE 7.4 ===================== -->
+<section>
+  <p class="kicker">Jalur risiko</p>
+  <h2>Keenam faktor itu terangkai menjadi satu jalur risiko</h2>
+  <figure>
+    <img src="figures/fig7-4-risk-pathway.png" alt="Diagram jalur risiko dari kiri ke kanan: sumber risiko berupa pengelakan alat keselamatan kritis, penggerak risiko berupa lemahnya penegakan dan tidak konsistennya praktik prosedur serta kurangnya pelatihan, paparan berupa bahan kimia, orang, dan properti, pemicu berupa ledakan, insiden, lalu konsekuensi berupa kematian dan cedera serta kerusakan dan reputasi." style="max-height:300px">
+    <figcaption>Urutan bentuk pada gambar: sumber risiko, penggerak risiko, paparan, pemicu, insiden, konsekuensi. Sumber: Lyon &amp; Popov (2022), Gambar 7.4 &mdash; &copy; Wiley.</figcaption>
+  </figure>
+  <aside class="notes">Bacakan jalur ini sebagai kalimat: pengelakan alat keselamatan kritis adalah sumber risikonya, dan yang menjadi penggeraknya adalah lemahnya penegakan serta tidak konsistennya praktik prosedur dan kurangnya pelatihan. Bacaan itu memperlihatkan bahwa memindahkan sumber risikonya saja tidak cukup; bila penggeraknya tetap ada, sumber risiko yang sama akan muncul kembali. Bandingkan bentuk jalur ini dengan baris SWIFRA: sumber dan penggerak berpadanan dengan kolom bagaimana dan mengapa.</aside>
+</section>
+
+<!-- ===================== APA YANG DITEMUKAN TIM DANGKAL ===================== -->
+<section>
+  <p class="kicker">Perbandingan</p>
+  <h2>Tim yang tidak berpengalaman berhenti pada prosedur dan pelatihan</h2>
+  <div class="cols">
+    <div class="col">
+      <div class="callout fragment"><strong>Yang mungkin terjadi.</strong> Tim menilai peristiwa ini sebagai jenis nyaris celaka, atau gagal melihat efek berantainya.</div>
+    </div>
+    <div class="col">
+      <div class="callout fragment"><strong>Akibatnya.</strong> Rekomendasi yang muncul berhenti pada penambahan prosedur dan pelatihan &mdash; dua pengendalian tingkat administratif.</div>
+    </div>
+  </div>
+  <p class="table-source">Poin kunci: tim yang lebih berpengalaman dengan pertanyaan mengapa dan bagaimana akan menggali lebih dalam dan menemukan faktor penyebab yang berantai menjadi efek sekunder.</p>
+  <aside class="notes">Ini slide terpenting untuk memperlihatkan bahwa mutu analisis bergantung pada tim, bukan pada format lembar. Sumber menyatakan secara eksplisit bahwa rekomendasi tim yang tidak berpengalaman cenderung berhenti pada prosedur dan pelatihan. Tanyakan ke kelas: apa akibat jangka panjang bila sebuah organisasi mencatat peristiwa berpotensi fatal sebagai nyaris celaka dan menutupnya dengan revisi prosedur? Jawaban yang diharapkan adalah peristiwa itu akan terjadi lagi, karena tidak ada pengendalian yang benar-benar berubah.</aside>
+</section>
+
+<!-- ===================== RANTAI PERTANYAAN ===================== -->
+<section>
+  <p class="kicker">Perbandingan</p>
+  <h2>Pertanyaan berantai itulah yang mengubah tingkat keparahannya</h2>
+  <ol style="font-size:28px">
+    <li class="fragment">Bagaimana bila terjadi reaksi kimia liar di dalam bejana bertekanan 4.500 galon?</li>
+    <li class="fragment">Bagaimana bila bejana itu meledak?</li>
+    <li class="fragment">Bagaimana bila pelarut mudah terbakar menyembur dari bejana dan langsung menyala?</li>
+    <li class="fragment">Bagaimana bila pecahan bejana menghantam perpipaan di dekatnya atau tangki metil isosianat hingga melepaskan bahan beracun?</li>
+  </ol>
+  <p class="table-source">Rangkaian ini yang membuat tim sampai pada tingkat keparahan katastrofik, bukan sekadar nyaris celaka. Sumber: Lyon &amp; Popov (2022), bagian 7.9.</p>
+  <aside class="notes">Bandingkan rangkaian ini dengan lima pertanyaan pada slide pembuka, dan tunjukkan bahwa keduanya adalah rantai yang sama. Inilah inti argumen penulis: pertanyaan berantai semacam ini, yang "seperti metode lima mengapa", yang membuat tim dapat menemukan bahwa rangkaiannya memang berpotensi katastrofik. Tanpa pertanyaan ketiga dan keempat, analisisnya berhenti pada satu bejana yang gagal dan tidak sampai pada perkara tata letak dan pelindung.</aside>
+</section>
+
+<!-- ===================== FIGURE 7.7 ===================== -->
+<section>
+  <p class="kicker">Hasil SWIFRA</p>
+  <h2>Dua baris SWIFRA sudah memuat keputusan yang utuh</h2>
+  <figure>
+    <img src="figures/fig7-7-swifra-qualitative.png" alt="Lembar SWIFRA terisi dua baris untuk tugas start-up unit methomyl: reaksi liar di bejana bertekanan dan pecahan bejana menghantam perpipaan serta tangki, masing-masing dengan konsekuensi, sebab, mengapa, pengendalian saat ini, tingkat risiko tinggi yang tidak dapat diterima, pengendalian tambahan, dan tingkat risiko kedua yang sedang." style="max-height:290px">
+    <figcaption>Versi kualitatif: tingkat dinyatakan dengan kata. Sumber: Lyon &amp; Popov (2022), Gambar 7.7 &mdash; &copy; Wiley.</figcaption>
+  </figure>
+  <aside class="notes">Tunjuk baris pertama: kemungkinan Occasional, keparahan Catastrophic, tingkat risiko High, dan jawaban tidak atas pertanyaan keterterimaan. Lalu tunjuk pengendalian tambahan yang diusulkan pada baris itu: menegakkan prosedur, melatih operator pada sistem baru, mengikuti telaah pra-start-up dan pengendalian perubahan, menghilangkan peluang mengelak pengaman, serta membentuk dan melatih tim pemadam. Perhatikan bahwa usulan itu tidak berhenti pada prosedur, dan hasilnya pada baris yang sama tercatat tingkat risiko kedua yang lebih rendah.</aside>
+</section>
+
+<!-- ===================== FIGURE 7.8 ===================== -->
+<section>
+  <p class="kicker">Hasil SWIFRA</p>
+  <h2>Versi semikuantitatif menambahkan angka penurunan risiko</h2>
+  <div class="cols">
+    <div class="col w60">
+      <figure>
+        <img src="figures/fig7-8-swifra-semiquant.png" alt="Lembar SWIFRA semikuantitatif terisi dua baris dengan nilai kemungkinan tiga, keparahan empat, tingkat risiko dua belas pada kedua baris, pengendalian tambahan, lalu nilai kedua dua dan tiga dengan tingkat risiko enam, dan persentase penurunan risiko lima puluh persen." style="max-height:280px">
+        <figcaption>Sumber: Lyon &amp; Popov (2022), Gambar 7.8 &mdash; &copy; Wiley.</figcaption>
+      </figure>
+    </div>
+    <div class="col">
+      <div class="callout"><strong>Kedua barisnya sama.</strong> Nilai awal 3 dikali 4 sama dengan 12, tingkat tinggi. Setelah pengendalian ditambahkan menjadi 2 dikali 3 sama dengan 6, tingkat sedang, turun 50 persen.</div>
+    </div>
+  </div>
+  <aside class="notes">Sebutkan satu manfaat praktis yang disebut penulis: karena bentuknya angka, persentase penurunan risiko dapat dihitung dan dipakai untuk berkomunikasi dengan manajemen. Namun ingatkan juga bahwa angka itu tetap taksiran tim, bukan hasil pengukuran &mdash; dan keandalannya hanya sebaik keandalan pengendalian yang diusulkan. Baris kedua pada lembar ini menarik karena pengendalian saat ini tertulis tidak ada, sehingga hampir seluruh penurunan risikonya berasal dari pengendalian tambahan berupa rancang ulang dan selimut pelindung.</aside>
+</section>
+
+<!-- ===================== LAPISAN PENGENDALIAN ===================== -->
+<section>
+  <p class="kicker">Lapisan pengendalian</p>
+  <h2>Lapisan pengendaliannya banyak, dan tiap lapisan punya batas</h2>
+  <table style="font-size:24px">
+    <thead><tr><th>Pengendalian</th><th>Tingkat dan batasnya</th></tr></thead>
+    <tbody>
+      <tr><td>Menyingkirkan metil isosianat dari pipa transfer dan membilasnya dengan nitrogen</td><td>minimalisasi</td></tr>
+      <tr><td>Integritas mekanik dan penggantian bejana dengan baja tahan karat melalui pengendalian perubahan</td><td>administratif dan rancangan</td></tr>
+      <tr><td>Selimut pelindung jaring baja di sekeliling tangki harian</td><td>rekayasa pasif, terbukti bekerja</td></tr>
+      <tr><td>Monitor udara di batas pagar</td><td>peringatan; 800 kaki dari unit, hanya efektif bila di sisi bawah angin</td></tr>
+    </tbody>
+  </table>
+  <p class="table-source">Sumber: Lyon &amp; Popov (2022), bagian 7.9; CSB (2011).</p>
+  <aside class="notes">Baris terakhir adalah pelajaran yang paling mudah dipakai mahasiswa: monitor udara pada malam kejadian tidak dapat menentukan pelepasan secara andal karena jaraknya lebih dari 800 kaki, hanya efektif bila berada di sisi bawah angin, dan konfigurasinya hanya mendeteksi klorin, karbon monoksida, metana, serta oksigen. Sensor senyawa organik volatilnya pun hanya menangkap senyawa pada rentang energi ionisasi tertentu, sehingga tidak dapat mendeteksi metomil atau zat antaranya. Pengendalian peringatan seperti ini perlu dinilai keandalannya, bukan hanya keberadaannya.</aside>
+</section>
+
+<!-- ===================== FIGURE 7.9 ===================== -->
+<section>
+  <p class="kicker">Setelah kejadian</p>
+  <h2>Selimut pelindung diperiksa, dan hasilnya menjelaskan mengapa tangki selamat</h2>
+  <div class="cols">
+    <div class="col w60">
+      <figure>
+        <img src="figures/fig7-9-blast-shield-post.jpg" alt="Foto sisa selimut pelindung tangki metil isosianat setelah kejadian, memperlihatkan kerangka dan jaring baja yang telah dibongkar dari tangki." style="max-height:330px">
+        <figcaption>Sumber: CSB, laporan akhir &mdash; dikutip melalui Lyon &amp; Popov (2022), Gambar 7.9.</figcaption>
+      </figure>
+    </div>
+    <div class="col">
+      <div class="callout"><strong>Yang diperiksa.</strong> Selimut dan isolasi dilepas, lalu tangki diperiksa dan diuji tekananya.</div>
+      <div class="callout"><strong>Hasilnya.</strong> Tidak ada bukti kerusakan panas; selimut itu sangat efektif.</div>
+    </div>
+  </div>
+  <aside class="notes">Slide ini memberi bukti bahwa pengendalian tingkat rekayasa dapat diverifikasi setelah kejadian, dan verifikasi itulah yang membedakannya dari pengendalian administratif yang hanya dapat diperiksa keberadaannya. Hubungkan dengan langkah kedelapan SWIFRA: taksiran penurunan risiko sebaiknya didasarkan pada pengendalian yang efektivitasnya dapat dibuktikan, bukan pada pengendalian yang hanya tercantum dalam prosedur.</aside>
+</section>
+
+<!-- ===================== REKOMENDASI ===================== -->
+<section>
+  <p class="kicker">Tindak lanjut</p>
+  <h2>Rekomendasi CSB menyasar mutu analisisnya, bukan hanya alatnya</h2>
+  <ul>
+    <li>Revisi kebijakan analisis bahaya proses tingkat korporasi.</li>
+    <li>Sahkan semua asumsi, termasuk risiko pengelakan pengaman.</li>
+    <li>Tuntaskan semua fase operasi dan topik khusus pada bab 9 pedoman CCPS.</li>
+    <li>Latih seluruh fasilitator analisis sebelum ditugaskan memimpin tim.</li>
+    <li>Latih anggota tim pemadam fasilitas pada sistem manajemen insiden nasional.</li>
+    <li>Tingkatkan monitor udara dan kajian faktor manusia ruang kendali.</li>
+  </ul>
+  <p class="table-source">Sumber: CSB (2011), dikutip pada Lyon &amp; Popov (2022), bagian 7.9.</p>
+  <aside class="notes">Perhatikan bahwa rekomendasi pertama dan kedua menyasar mutu analisis, bukan alat keselamatan. Rekomendasi kedua adalah yang paling langsung bertalian dengan bab ini: analisis apa pun harus memeriksa risiko pengelakan pengaman yang disengaja. Pada kasus ini pengelakan itu justru menjadi salah satu faktor penyebab, sehingga bila analisis sebelumnya telah memeriksanya, kondisi itu sudah tercatat. Tutup bagian ini dengan menyebutkan bahwa perusahaan akhirnya memutuskan menyingkirkan penggunaan metil isosianat dari fasilitas tersebut.</aside>
+</section>
+
+<!-- ===================== SINTESIS ===================== -->
+<section>
+  <p class="kicker">Sintesis</p>
+  <h2>Tiga hal yang membedakan analisis dangkal dari analisis yang berguna</h2>
+  <ol>
+    <li class="fragment"><strong>Pertanyaan berantai, bukan pertanyaan tunggal.</strong> Satu bejana yang gagal baru menjadi katastrofik setelah efek berantainya ditelusuri sampai ujung.</li>
+    <li class="fragment"><strong>Angka yang dapat ditelusuri.</strong> Kemungkinan dinyatakan dalam riwayat kejadian; keparahan dinyatakan dalam definisi skala. Keduanya dapat diaudit.</li>
+    <li class="fragment"><strong>Pengendalian yang nyata.</strong> Usulan berhenti pada prosedur dan pelatihan selama analisisnya berhenti pada penyebab yang tampak.</li>
+  </ol>
+  <aside class="notes">Ketiga butir ini juga menjadi kriteria penilaian pekerjaan mahasiswa. Beri tahu mereka bahwa baris SWIFRA yang pertanyaannya berantai, angkanya beralasan, dan pengendaliannya di tingkat rekayasa akan dinilai lebih tinggi daripada baris yang panjang tetapi berhenti pada pelatihan.</aside>
+</section>
+
+<!-- ===================== REFERENSI 1 ===================== -->
+<section class="refs">
+  <p class="kicker">Referensi</p>
+  <h2>Referensi (1 dari 2): sumber utama dan laporan kasus</h2>
+  <div style="font-size:24px;line-height:1.25">
+    <p>Center for Chemical Process Safety. (2008). <em>Guidelines for Hazard Evaluation Procedures</em>. New York: American Institute of Chemical Engineers.</p>
+    <p>Chemical Safety Board. (2011). <em>Bayer CropScience Pesticide Waste Tank Explosion</em>. Laporan akhir dirilis 20 Januari 2011. https://www.csb.gov/bayer-cropscience-pesticide-waste-tank-explosion/</p>
+    <p>Chemical Safety Board. <em>Video investigasi ledakan tangki limbah pestisida Bayer CropScience</em>. https://www.youtube.com/watch?v=bcfvzGtuamM</p>
+    <p>Lyon, B. K., &amp; Popov, G. (2018). <em>Risk Management Tools for Safety Professionals</em>. Park Ridge, IL: American Society of Safety Professionals.</p>
+    <p>Lyon, B. K., &amp; Popov, G. (2020). The power of what-if: assessing and understanding risk. <em>Professional Safety, 65</em>(6), 36&ndash;43.</p>
+    <p>Lyon, B. K., &amp; Popov, G. (2022). Chapter 7: &ldquo;What-if&rdquo; analysis methods. Dalam G. Popov, B. K. Lyon, &amp; B. Hollcroft, <em>Risk Assessment: A Practical Guide to Assessing Operational Risks</em> (edisi ke-2). Hoboken, NJ: John Wiley &amp; Sons. doi:10.1002/9781119798323.ch7</p>
+  </div>
+  <aside class="notes">Sumber utama deck ini adalah bab 7 pada baris terakhir. Seluruh kerangka proses, langkah SWIFRA, matriks risiko, dan studi kasus berasal dari bab tersebut. Laporan CSB tahun 2011 adalah sumber utama kasusnya, dan bab itu sendiri mengutipnya.</aside>
+</section>
+
+<!-- ===================== REFERENSI 2 ===================== -->
+<section class="refs">
+  <p class="kicker">Referensi</p>
+  <h2>Referensi (2 dari 2): standar dan peraturan</h2>
+  <div style="font-size:24px;line-height:1.25">
+    <p>ANSI/ASIS/RIMS RA.1. (2015). <em>Risk Assessment</em>. Alexandria, VA: ASIS.</p>
+    <p>ANSI/ASSP. (2016). <em>Prevention Through Design: Guidelines for Addressing Occupational Hazards and Risks in Design and Redesign Processes</em> [ANSI/ASSP Z590.3-2011 (R2016)]. Park Ridge, IL: ASSP.</p>
+    <p>ANSI/ASSP/ISO 31000. (2018). <em>Risk Management &mdash; Guidelines</em>. Park Ridge, IL: ASSP.</p>
+    <p>ANSI/ASSP/ISO 31010. (2019). <em>Risk Management &mdash; Risk Assessment</em>. Park Ridge, IL: ASSP.</p>
+    <p>ASSP Technical Report. (2020). <em>Risk Management: Techniques for Safety Practitioners</em>. Park Ridge, IL: ASSP.</p>
+    <p>Health and Safety Executive. (1999). <em>Management of Health and Safety at Work Regulations 1999</em>. London: HSE.</p>
+    <p>U.S. Environmental Protection Agency. (1994). <em>40 CFR Part 68: Chemical Accident Prevention Provisions (Risk Management Plan Rule)</em>.</p>
+    <p>U.S. Occupational Safety and Health Administration. (1992). <em>29 CFR 1910.119: Process Safety Management of Highly Hazardous Chemicals</em>.</p>
+  </div>
+  <aside class="notes">Daftar ini memuat standar tempat what-if dicantumkan sebagai metode, yaitu ISO 31010, RA.1, Z590.3, dan laporan teknis ASSP, serta dua peraturan Amerika Serikat yang menjadikan analisis bahaya proses sebagai kewajiban pada operasi dengan bahan kimia sangat berbahaya. Bila mahasiswa memerlukan satu rujukan tentang penerapan what-if di Indonesia, arahkan mereka membandingkan struktur matriks pada deck ini dengan kriteria risiko yang dipakai di tempat kerja masing-masing.</aside>
+</section>
+
+<!-- ===================== PENUTUP ===================== -->
+<section>
+  <p class="kicker">Penutup</p>
+  <h2>Pertanyaannya sederhana; mutunya bergantung pada keberanian menindaklanjutinya</h2>
+  <p style="font-size:30px;margin-top:24px">Tanya &ldquo;bagaimana bila&rdquo; &rarr; lanjutkan dengan &ldquo;bagaimana&rdquo; dan &ldquo;mengapa&rdquo; &rarr; nilai risikonya &rarr; usulkan pengendalian &rarr; taksir ulang.</p>
+  <div class="callout fragment" style="margin-top:32px"><strong>Pertanyaan penutup dari sumber.</strong> Bagaimana bila organisasi itu menjalankan penilaian risiko yang efektif atas proses kimianya sebelum kejadian? Jawabannya, menurut penulisnya, kemungkinan besar dapat membantu mengenali masalahnya dan kebutuhan menyingkirkan bahan paling berbahaya itu.</div>
+  <aside class="notes">Tutup dengan mengembalikan ke pembuka: pertanyaan yang sama diajukan di awal dan di akhir, tetapi sekarang mahasiswa tahu apa yang harus dilakukan setelah pertanyaan itu diajukan. Tekankan bahwa kerja profesionalnya justru pada bagian setelah tanda tanya &mdash; yaitu menelusuri, menilai, mengusulkan, dan menaksir ulang.</aside>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/markdown/markdown.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script>
+  // Audit luapan: menandai slide yang isinya melewati kanvas 1280x720.
+  (function () {
+    function audit() {
+      var debug = /[?&]debug\b/.test(location.search);
+      var bad = [];
+      document.querySelectorAll('.slides > section').forEach(function (s, i) {
+        s.style.outline = '';
+        if (s.scrollHeight > s.clientHeight + 2 || s.scrollWidth > s.clientWidth + 2) {
+          bad.push(i + 1);
+          if (debug) { s.style.outline = '4px solid #d64545'; }
+        }
+      });
+      if (bad.length) {
+        console.warn('[deck QA] isi melewati kanvas 720px pada slide: ' + bad.join(', ') +
+          ' — potong atau pecah slide-nya; jangan kecilkan huruf.');
+      }
+    }
+    window.addEventListener('load', audit);
+    window.addEventListener('resize', audit);
+  })();
+
+  var plugins = [window.RevealMarkdown, window.RevealNotes].filter(Boolean);
+
+  if (/print-pdf/i.test(location.search)) {
+    document.documentElement.classList.add('print-pdf');
+  }
+  window.addEventListener('beforeprint', function () {
+    document.documentElement.classList.add('print-pdf');
+  });
+  window.addEventListener('afterprint', function () {
+    document.documentElement.classList.remove('print-pdf');
+  });
+
+  Reveal.initialize({
+    width: 1280,
+    height: 720,
+    margin: 0,
+    minScale: 0.2,
+    maxScale: 2.0,
+    center: false,
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',          // gerak antar slide, bukan sekadar pudar
+    transitionSpeed: 'default',
+    backgroundTransition: 'fade',
+    fragments: true,              // pemunculan bertahap pada slide terpilih
+    progress: true,
+    controls: true,
+    touch: true,
+    pdfSeparateFragments: false,
+    plugins: plugins
+  });
+</script>
+</body>
+</html>
